@@ -1,17 +1,38 @@
 version: '3.8'
 
 services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: finance-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-finance_db}
+      MYSQL_USER: ${MYSQL_USER:-finance_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-finance_password}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Backend API
   backend:
     build: ./backend
     container_name: finance-backend
     restart: unless-stopped
     environment:
-      - DATABASE_URL=sqlite:///./data/finance.db
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-finance_user}:${MYSQL_PASSWORD:-finance_password}@mysql:3306/${MYSQL_DATABASE:-finance_db}
       - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
       - CORS_ORIGINS=http://localhost,http://localhost:80,https://${DOMAIN:-localhost}
-    volumes:
-      - backend-data:/app/data
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - finance-network
     healthcheck:
@@ -32,26 +53,9 @@ services:
     networks:
       - finance-network
 
-  # Nginx Reverse Proxy (optional - for advanced setup)
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: finance-nginx
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./nginx/ssl:/etc/nginx/ssl:ro
-  #   depends_on:
-  #     - backend
-  #     - frontend
-  #   networks:
-  #     - finance-network
-
 networks:
   finance-network:
     driver: bridge
 
 volumes:
-  backend-data:
+  mysql-data:

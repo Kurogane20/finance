@@ -51,6 +51,12 @@ Edit nilai-nilai berikut:
 ```
 SECRET_KEY=your-random-32-character-secret-key
 DOMAIN=finance.yourdomain.com
+
+# MySQL Configuration
+MYSQL_ROOT_PASSWORD=your-secure-root-password
+MYSQL_DATABASE=finance_db
+MYSQL_USER=finance_user
+MYSQL_PASSWORD=your-secure-db-password
 ```
 
 ### 4. Update Frontend API URL
