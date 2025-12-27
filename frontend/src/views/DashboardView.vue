@@ -43,37 +43,48 @@
       </div>
     </div>
 
-    <!-- Charts Grid -->
-    <div class="charts-grid">
-      <!-- Revenue vs Expense Chart -->
-      <ChartCard 
-        title="Pendapatan vs Pengeluaran"
-        class="chart-wide"
-      >
-        <Line 
-          v-if="revenueExpenseData"
-          :data="revenueExpenseData" 
-          :options="lineChartOptions" 
-        />
-      </ChartCard>
+    <!-- Main Content Grid: Analytics + Charts -->
+    <div class="dashboard-main-grid">
+      <!-- Left Column: Analytics Insights -->
+      <div class="analytics-column">
+        <AnalyticsInsights ref="analyticsRef" />
+      </div>
+      
+      <!-- Right Column: Charts -->
+      <div class="charts-column">
+        <!-- Revenue vs Expense Chart -->
+        <ChartCard 
+          title="Pendapatan vs Pengeluaran"
+          class="chart-card-full"
+        >
+          <Line 
+            v-if="revenueExpenseData"
+            :data="revenueExpenseData" 
+            :options="lineChartOptions" 
+          />
+        </ChartCard>
 
-      <!-- Expense by Category -->
-      <ChartCard title="Pengeluaran per Kategori">
-        <Doughnut 
-          v-if="expenseCategoryData"
-          :data="expenseCategoryData" 
-          :options="doughnutOptions" 
-        />
-      </ChartCard>
+        <!-- Category Charts Row -->
+        <div class="category-charts-row">
+          <!-- Expense by Category -->
+          <ChartCard title="Pengeluaran per Kategori">
+            <Doughnut 
+              v-if="expenseCategoryData"
+              :data="expenseCategoryData" 
+              :options="doughnutOptions" 
+            />
+          </ChartCard>
 
-      <!-- Income by Category -->
-      <ChartCard title="Pendapatan per Kategori">
-        <Doughnut 
-          v-if="incomeCategoryData"
-          :data="incomeCategoryData" 
-          :options="doughnutOptions" 
-        />
-      </ChartCard>
+          <!-- Income by Category -->
+          <ChartCard title="Pendapatan per Kategori">
+            <Doughnut 
+              v-if="incomeCategoryData"
+              :data="incomeCategoryData" 
+              :options="doughnutOptions" 
+            />
+          </ChartCard>
+        </div>
+      </div>
     </div>
 
     <!-- Recent Transactions -->
@@ -109,6 +120,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import KPICard from '@/components/common/KPICard.vue'
 import ChartCard from '@/components/common/ChartCard.vue'
 import DataTable from '@/components/common/DataTable.vue'
+import AnalyticsInsights from '@/components/common/AnalyticsInsights.vue'
 import { Line, Doughnut } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -136,6 +148,7 @@ ChartJS.register(
 )
 
 const dashboardStore = useDashboardStore()
+const analyticsRef = ref(null)
 
 const period = ref('month')
 const periods = [
@@ -316,6 +329,36 @@ onMounted(() => {
 .stat-value { font-size: 1.25rem; font-weight: 700; }
 .stat-label { color: var(--text-secondary); font-size: 0.875rem; }
 
+/* Main Dashboard Grid */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.analytics-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.charts-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.chart-card-full {
+  flex: 1;
+}
+
+.category-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+/* Legacy charts-grid for compatibility */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -327,12 +370,43 @@ onMounted(() => {
   grid-column: span 1;
 }
 
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr 1.2fr;
+  }
+}
+
 @media (max-width: 1200px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-column {
+    order: 2;
+  }
+  
+  .charts-column {
+    order: 1;
+  }
+  
   .charts-grid {
     grid-template-columns: 1fr;
   }
+  
   .chart-wide {
     grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .quick-stats {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .category-charts-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

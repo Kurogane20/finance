@@ -5,3 +5,4 @@ from .accounts import router as accounts_router
 from .budgets import router as budgets_router
 from .reports import router as reports_router
 from .users import router as users_router
+from .analytics import router as analytics_router

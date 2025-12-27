@@ -75,11 +75,18 @@ cd finance
 
 # Setup environment
 cp .env.example .env
-nano .env  # Edit SECRET_KEY dan DOMAIN
+
+# Generate secure SECRET_KEY
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+# Copy output ke .env
+
+nano .env  # Edit SECRET_KEY, DOMAIN, dan database passwords
 
 # Build dan jalankan
 docker-compose up -d --build
 ```
+
+⚠️ **PENTING**: Jangan deploy ke production tanpa mengikuti [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
 
 Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk panduan lengkap deployment ke VPS Ubuntu.
 

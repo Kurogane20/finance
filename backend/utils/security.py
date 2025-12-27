@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import os
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -8,10 +9,19 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 
-# Configuration
-SECRET_KEY = "finance-dashboard-secret-key-2024-very-secure"
+# Configuration - SECRET_KEY MUST be set in production via environment variable
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    import warnings
+    warnings.warn(
+        "SECRET_KEY not set in environment! Using insecure default. "
+        "This is only acceptable for development.",
+        RuntimeWarning
+    )
+    SECRET_KEY = "dev-only-insecure-key-do-not-use-in-production"
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours default
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

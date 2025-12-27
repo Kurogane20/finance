@@ -8,7 +8,8 @@ from routers import (
     accounts_router,
     budgets_router,
     reports_router,
-    users_router
+    users_router,
+    analytics_router
 )
 
 # Create database tables
@@ -40,6 +41,7 @@ app.include_router(accounts_router, prefix="/api")
 app.include_router(budgets_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
+app.include_router(analytics_router, prefix="/api")
 
 
 @app.get("/")
