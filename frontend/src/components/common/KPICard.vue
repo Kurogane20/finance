@@ -125,35 +125,3 @@ const changeIcon = computed(() => {
   background: rgba(239, 68, 68, 0.15);
 }
 </style>
-const formattedValue = computed(() => {
-  const num = Number(props.value)
-  if (isNaN(num)) return props.value
-  
-  // Format as Indonesian Rupiah
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(num)
-})
-
-const iconClass = computed(() => {
-  const colorMap = {
-    '#10b981': 'green',
-    '#ef4444': 'red',
-    '#6366f1': 'purple',
-    '#8b5cf6': 'purple',
-    '#06b6d4': 'blue'
-  }
-  return colorMap[props.color] || 'purple'
-})
-
-const changeClass = computed(() => {
-  return props.changeType === 'increase' ? 'positive' : 'negative'
-})
-
-const changeIcon = computed(() => {
-  return props.changeType === 'increase' ? '↑' : '↓'
-})
-</script>
