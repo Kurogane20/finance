@@ -197,3 +197,88 @@ async def get_audit_logs(
         }
         for log in logs
     ]
+
+
+@router.get("/profile/me", response_model=UserResponse)
+async def get_my_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's profile"""
+    return current_user
+
+
+@router.put("/profile/me", response_model=UserResponse)
+async def update_my_profile(
+    profile: "ProfileUpdate",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update current user's profile"""
+    from schemas.user import ProfileUpdate
+    
+    update_data = profile.model_dump(exclude_unset=True)
+    
+    # Check if email is being changed and if it's already taken
+    if "email" in update_data and update_data["email"] != current_user.email:
+        existing = db.query(User).filter(User.email == update_data["email"]).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email sudah digunakan")
+    
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="update_profile",
+        entity="user",
+        entity_id=current_user.id,
+        description=f"User {current_user.email} update profile",
+        new_values=update_data,
+        timestamp=datetime.utcnow()
+    )
+    db.add(audit)
+    db.commit()
+    
+    return current_user
+
+
+@router.post("/profile/change-password")
+async def change_password(
+    password_data: "PasswordChange",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change current user's password"""
+    from schemas.user import PasswordChange
+    from utils.security import verify_password
+    
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Password lama salah")
+    
+    # Validate new password
+    if len(password_data.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password baru minimal 8 karakter")
+    
+    # Update password
+    current_user.password_hash = get_password_hash(password_data.new_password)
+    db.commit()
+    
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="change_password",
+        entity="user",
+        entity_id=current_user.id,
+        description=f"User {current_user.email} mengganti password",
+        timestamp=datetime.utcnow()
+    )
+    db.add(audit)
+    db.commit()
+    
+    return {"message": "Password berhasil diubah"}

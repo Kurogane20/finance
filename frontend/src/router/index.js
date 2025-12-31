@@ -48,6 +48,24 @@ const routes = [
         name: 'AuditLogs',
         component: () => import('@/views/AuditLogsView.vue'),
         meta: { requiresAuth: true, requiredRole: ['admin', 'approver'] }
+    },
+    {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('@/views/ProfileView.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/invoices',
+        name: 'Invoices',
+        component: () => import('@/views/InvoicesView.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/settings',
+        name: 'Settings',
+        component: () => import('@/views/SettingsView.vue'),
+        meta: { requiresAuth: true, requiredRole: ['admin'] }
     }
 ]
 

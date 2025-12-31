@@ -72,6 +72,7 @@ const authStore = useAuthStore()
 const mainMenuItems = [
   { path: '/', icon: '📊', label: 'Dashboard' },
   { path: '/transactions', icon: '💳', label: 'Transaksi' },
+  { path: '/invoices', icon: '📄', label: 'Invoice' },
   { path: '/accounts', icon: '🏦', label: 'Akun & AR/AP' },
   { path: '/budgets', icon: '📋', label: 'Anggaran' },
   { path: '/reports', icon: '📈', label: 'Laporan' }
@@ -83,6 +84,7 @@ const adminMenuItems = computed(() => {
   ]
   if (authStore.isAdmin) {
     items.unshift({ path: '/users', icon: '👥', label: 'Pengguna' })
+    items.push({ path: '/settings', icon: '⚙️', label: 'Pengaturan' })
   }
   return items
 })

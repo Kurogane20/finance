@@ -99,5 +99,24 @@ export const usersAPI = {
     create: (data) => api.post('/users', data),
     update: (id, data) => api.put(`/users/${id}`, data),
     delete: (id) => api.delete(`/users/${id}`),
-    getAuditLogs: (params = {}) => api.get('/users/audit-logs/all', { params })
+    getAuditLogs: (params = {}) => api.get('/users/audit-logs/all', { params }),
+    // Profile
+    getProfile: () => api.get('/users/profile/me'),
+    updateProfile: (data) => api.put('/users/profile/me', data),
+    changePassword: (currentPassword, newPassword) => api.post('/users/profile/change-password', { current_password: currentPassword, new_password: newPassword })
+}
+
+// Invoices API
+export const invoicesAPI = {
+    getAll: (params = {}) => api.get('/accounts', { params: { ...params, type: 'invoice' } }),
+    getReceivables: (params = {}) => api.get('/accounts', { params: { ...params } }),
+    getPayables: (params = {}) => api.get('/accounts', { params: { ...params } })
+}
+
+// Settings API
+export const settingsAPI = {
+    getCompany: () => api.get('/settings/company'),
+    updateCompany: (data) => api.put('/settings/company', data),
+    getPreferences: () => api.get('/settings/preferences'),
+    updatePreferences: (data) => api.put('/settings/preferences', data)
 }

@@ -9,9 +9,13 @@
       <button class="btn btn-ghost btn-icon" title="Notifikasi">
         🔔
       </button>
-      <button class="btn btn-ghost btn-icon" title="Pengaturan">
+      <router-link to="/settings" class="btn btn-ghost btn-icon" title="Pengaturan">
         ⚙️
-      </button>
+      </router-link>
+      <router-link to="/profile" class="btn btn-ghost user-btn" title="Profil">
+        <span class="user-avatar-sm">{{ authStore.userInitials }}</span>
+        <span class="user-name-sm">{{ authStore.userName }}</span>
+      </router-link>
       <button class="btn btn-secondary" @click="handleLogout">
         🚪 Keluar
       </button>
@@ -31,11 +35,14 @@ const authStore = useAuthStore()
 const pageTitles = {
   '/': 'Dashboard',
   '/transactions': 'Transaksi',
+  '/invoices': 'Invoice',
   '/accounts': 'Akun & AR/AP',
   '/budgets': 'Anggaran',
   '/reports': 'Laporan',
   '/users': 'Manajemen Pengguna',
-  '/audit-logs': 'Audit Log'
+  '/audit-logs': 'Audit Log',
+  '/profile': 'Profil Saya',
+  '/settings': 'Pengaturan'
 }
 
 const pageTitle = computed(() => pageTitles[route.path] || 'Dashboard')
