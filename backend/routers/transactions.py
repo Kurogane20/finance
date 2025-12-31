@@ -111,7 +111,7 @@ async def create_transaction(
     db: Session = Depends(get_db)
 ):
     """Create a new transaction"""
-    from backend.services.finance_service import FinanceService
+    from services.finance_service import FinanceService
     
     try:
         service = FinanceService(db, current_user.id)
@@ -132,7 +132,7 @@ async def update_transaction(
     db: Session = Depends(get_db)
 ):
     """Update a transaction"""
-    from backend.services.finance_service import FinanceService
+    from services.finance_service import FinanceService
     
     try:
         service = FinanceService(db, current_user.id)
@@ -157,7 +157,7 @@ async def delete_transaction(
     db: Session = Depends(get_db)
 ):
     """Delete a transaction (admin only)"""
-    from backend.services.finance_service import FinanceService
+    from services.finance_service import FinanceService
     
     try:
         service = FinanceService(db, current_user.id)
@@ -177,7 +177,7 @@ async def import_transactions(
     db: Session = Depends(get_db)
 ):
     """Import transactions from CSV"""
-    from backend.services.finance_service import FinanceService
+    from services.finance_service import FinanceService
     
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be a CSV")

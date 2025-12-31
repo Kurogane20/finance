@@ -133,11 +133,10 @@ class AnalyticsService:
         now = datetime.utcnow()
         current_month = now.month
         current_year = now.year
+        current_period = f"{current_year}-{current_month:02d}"
         
         budgets = self.db.query(Budget).filter(
-            Budget.month == current_month,
-            Budget.year == current_year,
-            Budget.is_active == True
+            Budget.period == current_period
         ).all()
         
         for budget in budgets:
@@ -152,8 +151,8 @@ class AnalyticsService:
                 Transaction.status == 'completed'
             ).scalar() or Decimal('0')
             
-            if budget.amount > 0:
-                usage_pct = float(actual / budget.amount)
+            if budget.allocated_amount > 0:
+                usage_pct = float(actual / budget.allocated_amount)
                 category_name = budget.category.name if budget.category else 'Lainnya'
                 
                 if usage_pct >= self.BUDGET_CRITICAL_THRESHOLD:
@@ -168,7 +167,7 @@ class AnalyticsService:
                         'color': '#ef4444',
                         'data': {
                             'category': category_name,
-                            'budget': float(budget.amount),
+                            'budget': float(budget.allocated_amount),
                             'actual': float(actual),
                             'usage_percent': usage_pct * 100
                         },
@@ -186,9 +185,9 @@ class AnalyticsService:
                         'color': '#f59e0b',
                         'data': {
                             'category': category_name,
-                            'budget': float(budget.amount),
+                            'budget': float(budget.allocated_amount),
                             'actual': float(actual),
-                            'remaining': float(budget.amount - actual),
+                            'remaining': float(budget.allocated_amount - actual),
                             'usage_percent': usage_pct * 100
                         },
                         'action_url': '/budgets'
@@ -423,10 +422,9 @@ class AnalyticsService:
         # Factor 2: Budget Compliance (0-20)
         current_month = now.month
         current_year = now.year
+        current_period = f"{current_year}-{current_month:02d}"
         budgets = self.db.query(Budget).filter(
-            Budget.month == current_month,
-            Budget.year == current_year,
-            Budget.is_active == True
+            Budget.period == current_period
         ).all()
         
         if budgets:
@@ -442,7 +440,7 @@ class AnalyticsService:
                     Transaction.status == 'completed'
                 ).scalar() or Decimal('0')
                 
-                if actual <= budget.amount:
+                if actual <= budget.allocated_amount:
                     compliant_count += 1
             
             budget_score = int(20 * compliant_count / len(budgets))

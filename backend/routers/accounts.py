@@ -260,7 +260,7 @@ async def pay_invoice(
     db: Session = Depends(get_db)
 ):
     """Mark invoice as paid and create transaction via Service"""
-    from backend.services.finance_service import FinanceService
+    from services.finance_service import FinanceService
     
     account_id = payment_data.get("account_id")
     if not account_id:
