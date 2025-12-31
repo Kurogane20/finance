@@ -1,5 +1,11 @@
 version: '3.8'
 
+# ============================================
+# PRODUCTION Docker Compose Configuration
+# ============================================
+# Usage: docker-compose -f docker-compose.prod.yml up -d --build
+# Requires: .env file with production secrets
+
 services:
   # MySQL Database
   mysql:
@@ -7,10 +13,10 @@ services:
     container_name: finance-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-finance_db}
       MYSQL_USER: ${MYSQL_USER:-finance_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-finance_password}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -29,11 +35,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-finance_user}:${MYSQL_PASSWORD:-finance_password}@mysql:3306/${MYSQL_DATABASE:-finance_db}
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-finance_user}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-finance_db}
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required for production}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://finance.mitramutiara.co.id}
-      - SEED_MODE=${SEED_MODE:-users_only}
+      - SEED_MODE=users_only
     depends_on:
       mysql:
         condition: service_healthy
@@ -45,7 +51,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Frontend
+  # Frontend (Production build served by nginx)
   frontend:
     build: ./frontend
     container_name: finance-frontend

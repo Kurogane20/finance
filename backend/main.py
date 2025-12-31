@@ -24,10 +24,23 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS middleware
+# CORS middleware - includes both dev and production origins
+import os
+
+# Get allowed origins from environment or use defaults
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
+DEFAULT_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "https://finance.mitramutiara.co.id",
+    "http://finance.mitramutiara.co.id",
+]
+ALLOWED_ORIGINS = list(set(DEFAULT_ORIGINS + [o.strip() for o in CORS_ORIGINS if o.strip()]))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,11 +77,19 @@ async def healthz():
     return {"status": "ok"}
 
 
-# Run seed on startup (optional - can be run separately)
+# Run seed on startup - respects SEED_MODE environment variable
 @app.on_event("startup")
 async def startup_event():
-    from utils.seed_data import seed_database
-    seed_database()
+    seed_mode = os.getenv("SEED_MODE", "full").lower()
+    
+    if seed_mode == "users_only":
+        # Production mode - only seed users, roles, and categories
+        from utils.seed_users_only import seed_users_only
+        seed_users_only()
+    else:
+        # Development mode - seed full demo data
+        from utils.seed_data import seed_database
+        seed_database()
 
 
 if __name__ == "__main__":

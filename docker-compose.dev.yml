@@ -1,0 +1,76 @@
+version: '3.8'
+
+# ============================================
+# DEVELOPMENT Docker Compose Configuration
+# ============================================
+# Usage: docker-compose -f docker-compose.dev.yml up -d
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: finance-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: devroot123
+      MYSQL_DATABASE: finance_db
+      MYSQL_USER: finance_user
+      MYSQL_PASSWORD: devpassword123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data-dev:/var/lib/mysql
+    networks:
+      - finance-network-dev
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: finance-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://finance_user:devpassword123@mysql:3306/finance_db
+      - SECRET_KEY=dev-only-insecure-key-do-not-use-in-production
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+      - SEED_MODE=full
+    volumes:
+      - ./backend:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - finance-network-dev
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend (Dev mode with Vite)
+  frontend:
+    image: node:20-alpine
+    container_name: finance-frontend-dev
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+    networks:
+      - finance-network-dev
+
+networks:
+  finance-network-dev:
+    driver: bridge
+
+volumes:
+  mysql-data-dev:
