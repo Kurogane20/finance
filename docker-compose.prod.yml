@@ -33,7 +33,7 @@ services:
     container_name: finance-backend
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "8002:8000"
     environment:
       - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-finance_user}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-finance_db}
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required for production}
