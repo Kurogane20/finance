@@ -168,3 +168,173 @@ async def get_account_transactions(
         "account": AccountResponse.model_validate(account),
         "transactions": transactions
     }
+
+
+# ========================================
+# INVOICE ENDPOINTS
+# ========================================
+
+@router.get("/invoices")
+async def get_invoices(
+    type: Optional[str] = Query(None, description="Filter by type: receivable/payable"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all invoices"""
+    query = db.query(Invoice)
+    if type:
+        query = query.filter(Invoice.type == type)
+    if status:
+        query = query.filter(Invoice.status == status)
+    
+    invoices = query.order_by(Invoice.issue_date.desc()).all()
+    
+    return [
+        {
+            "id": inv.id,
+            "invoice_number": inv.invoice_number,
+            "type": inv.type,
+            "customer_name": inv.customer_name,
+            "customer_email": inv.customer_email,
+            "amount": float(inv.amount),
+            "tax_amount": float(inv.tax_amount) if inv.tax_amount else 0,
+            "total_amount": float(inv.total_amount),
+            "status": inv.status,
+            "issue_date": inv.issue_date.isoformat() if inv.issue_date else None,
+            "due_date": inv.due_date.isoformat() if inv.due_date else None,
+            "notes": inv.notes
+        }
+        for inv in invoices
+    ]
+
+
+@router.post("/invoices")
+async def create_invoice(
+    invoice_data: dict,
+    current_user: User = Depends(require_role(["admin", "editor"])),
+    db: Session = Depends(get_db)
+):
+    """Create a new invoice"""
+    from datetime import datetime
+    
+    # Generate invoice number if not provided
+    if not invoice_data.get("invoice_number"):
+        count = db.query(Invoice).count() + 1
+        invoice_data["invoice_number"] = f"INV-{datetime.now().strftime('%Y%m')}-{count:04d}"
+    
+    # Parse dates
+    issue_date = invoice_data.get("issue_date")
+    if isinstance(issue_date, str):
+        issue_date = date.fromisoformat(issue_date)
+    
+    due_date = invoice_data.get("due_date")
+    if isinstance(due_date, str):
+        due_date = date.fromisoformat(due_date)
+    
+    new_invoice = Invoice(
+        invoice_number=invoice_data["invoice_number"],
+        type=invoice_data.get("type", "receivable"),
+        customer_name=invoice_data["customer_name"],
+        customer_email=invoice_data.get("customer_email"),
+        amount=invoice_data.get("amount", 0),
+        tax_amount=invoice_data.get("tax_amount", 0),
+        total_amount=invoice_data.get("total_amount", invoice_data.get("amount", 0)),
+        status=invoice_data.get("status", "draft"),
+        issue_date=issue_date or date.today(),
+        due_date=due_date,
+        notes=invoice_data.get("notes"),
+        created_by=current_user.id
+    )
+    
+    db.add(new_invoice)
+    db.commit()
+    db.refresh(new_invoice)
+    
+    return {
+        "id": new_invoice.id,
+        "invoice_number": new_invoice.invoice_number,
+        "message": "Invoice berhasil dibuat"
+    }
+
+
+@router.get("/invoices/{invoice_id}")
+async def get_invoice(
+    invoice_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get invoice by ID"""
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice tidak ditemukan")
+    
+    return {
+        "id": invoice.id,
+        "invoice_number": invoice.invoice_number,
+        "type": invoice.type,
+        "customer_name": invoice.customer_name,
+        "customer_email": invoice.customer_email,
+        "amount": float(invoice.amount),
+        "tax_amount": float(invoice.tax_amount) if invoice.tax_amount else 0,
+        "total_amount": float(invoice.total_amount),
+        "status": invoice.status,
+        "issue_date": invoice.issue_date.isoformat() if invoice.issue_date else None,
+        "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+        "paid_date": invoice.paid_date.isoformat() if invoice.paid_date else None,
+        "notes": invoice.notes
+    }
+
+
+@router.put("/invoices/{invoice_id}")
+async def update_invoice(
+    invoice_id: int,
+    invoice_data: dict,
+    current_user: User = Depends(require_role(["admin", "editor"])),
+    db: Session = Depends(get_db)
+):
+    """Update an invoice"""
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice tidak ditemukan")
+    
+    # Update fields
+    for field in ["type", "customer_name", "customer_email", "amount", "tax_amount", 
+                  "total_amount", "status", "notes"]:
+        if field in invoice_data:
+            setattr(invoice, field, invoice_data[field])
+    
+    # Handle date fields
+    if "issue_date" in invoice_data:
+        issue_date = invoice_data["issue_date"]
+        if isinstance(issue_date, str):
+            issue_date = date.fromisoformat(issue_date)
+        invoice.issue_date = issue_date
+    
+    if "due_date" in invoice_data:
+        due_date = invoice_data["due_date"]
+        if isinstance(due_date, str):
+            due_date = date.fromisoformat(due_date)
+        invoice.due_date = due_date
+    
+    db.commit()
+    db.refresh(invoice)
+    
+    return {"message": "Invoice berhasil diupdate", "id": invoice.id}
+
+
+@router.delete("/invoices/{invoice_id}")
+async def delete_invoice(
+    invoice_id: int,
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Delete an invoice"""
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice tidak ditemukan")
+    
+    db.delete(invoice)
+    db.commit()
+    
+    return {"message": "Invoice berhasil dihapus"}
