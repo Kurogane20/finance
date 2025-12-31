@@ -116,6 +116,16 @@ async def create_transaction(
         created_by=current_user.id
     )
     db.add(db_transaction)
+    
+    # Update Account Balance
+    if transaction.status == "completed":
+        account = db.query(Account).filter(Account.id == transaction.account_id).first()
+        if account:
+            if transaction.type == "credit":
+                account.balance += transaction.amount
+            else:
+                account.balance -= transaction.amount
+
     db.commit()
     db.refresh(db_transaction)
     
@@ -147,15 +157,39 @@ async def update_transaction(
     if not db_transaction:
         raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
     
+    # Store old values for audit and balance reversal
     old_values = {
         "amount": float(db_transaction.amount),
-        "description": db_transaction.description,
-        "status": db_transaction.status
+        "type": db_transaction.type,
+        "account_id": db_transaction.account_id,
+        "status": db_transaction.status,
+        "description": db_transaction.description
     }
-    
+
+    # REVERSE OLD EFFECT if it was completed
+    if old_values["status"] == "completed":
+        old_account = db.query(Account).filter(Account.id == old_values["account_id"]).first()
+        if old_account:
+            if old_values["type"] == "credit":
+                old_account.balance -= Decimal(str(old_values["amount"]))
+            else:
+                old_account.balance += Decimal(str(old_values["amount"]))
+
+    # Update fields
     update_data = transaction.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_transaction, field, value)
+    
+    # APPLY NEW EFFECT if it is completed
+    if db_transaction.status == "completed":
+        # Note: db_transaction.account_id might have changed, or stayed same. 
+        # Since we fetch account fresh, it handles change correctly.
+        new_account = db.query(Account).filter(Account.id == db_transaction.account_id).first()
+        if new_account:
+            if db_transaction.type == "credit":
+                new_account.balance += db_transaction.amount
+            else:
+                new_account.balance -= db_transaction.amount
     
     db.commit()
     db.refresh(db_transaction)
@@ -204,6 +238,15 @@ async def delete_transaction(
     db.add(audit)
     
     db.delete(db_transaction)
+    
+    # Update Account Balance (Reverse)
+    account = db.query(Account).filter(Account.id == db_transaction.account_id).first()
+    if account and db_transaction.status == "completed":
+        if db_transaction.type == "credit":
+            account.balance -= db_transaction.amount
+        else:
+            account.balance += db_transaction.amount
+            
     db.commit()
     
     return {"message": "Transaksi berhasil dihapus"}
@@ -225,8 +268,11 @@ async def import_transactions(
     success_count = 0
     errors = []
     
-    # Cache accounts and categories to reduce DB queries
-    accounts = {a.name.lower(): a.id for a in db.query(Account).all()}
+    errors = []
+    
+    # Cache accounts objects to update balances efficiently
+    # We need the objects attached to session to update them
+    account_objects = {a.name.lower(): a for a in db.query(Account).all()}
     categories = {c.name.lower(): c.id for c in db.query(Category).all()}
     
     for row_num, row in enumerate(csv_reader, start=1):
@@ -244,12 +290,14 @@ async def import_transactions(
                 
             # Resolve Account
             acc_name = row['Account'].lower()
-            account_id = accounts.get(acc_name)
-            if not account_id:
-                # Try partial match or default
-                account_id = next((id for name, id in accounts.items() if acc_name in name), None)
-                if not account_id:
+            account_obj = account_objects.get(acc_name)
+            if not account_obj:
+                # Try partial match
+                account_obj = next((acc for name, acc in account_objects.items() if acc_name in name), None)
+                if not account_obj:
                     raise ValueError(f"Account '{row['Account']}' not found")
+            
+            account_id = account_obj.id
             
             # Resolve Category
             cat_name = row.get('Category', 'Lainnya').lower()
@@ -279,6 +327,14 @@ async def import_transactions(
                 created_by=current_user.id
             )
             db.add(transaction)
+            
+            # Update Balance
+            # Since we have the account object attached to session, simple update works
+            if transaction.type == "credit":
+                account_obj.balance += transaction.amount
+            else:
+                account_obj.balance -= transaction.amount
+                
             success_count += 1
             
         except Exception as e:

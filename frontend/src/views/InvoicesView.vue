@@ -105,6 +105,9 @@
                   <button class="btn btn-sm btn-outline" @click="editInvoice(invoice)">
                     ✏️
                   </button>
+                  <button v-if="invoice.status !== 'paid'" class="btn btn-sm btn-success ml-1" @click="openPayModal(invoice)" title="Bayar">
+                    💰
+                  </button>
                 </div>
               </td>
             </tr>
@@ -183,6 +186,37 @@
         </form>
       </div>
     </div>
+
+    <!-- Pay Invoice Modal -->
+    <div v-if="showPayModal" class="modal-overlay" @click.self="showPayModal = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Bayar Invoice {{ payingInvoice?.invoice_number }}</h3>
+          <button class="btn-close" @click="showPayModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-4">
+            Total: <strong>{{ formatCurrency(payingInvoice?.total_amount) }}</strong><br>
+            Tipe: {{ payingInvoice?.type === 'receivable' ? 'Terima Pembayaran' : 'Lakukan Pembayaran' }}
+          </p>
+          <div class="form-group">
+            <label class="form-label">Pilih Akun {{ payingInvoice?.type === 'receivable' ? 'Penerima' : 'Sumber' }}</label>
+            <select v-model="selectedAccount" class="form-input" required>
+              <option :value="null">Pilih Akun...</option>
+              <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
+                {{ acc.name }} ({{ formatCurrency(acc.balance) }})
+              </option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="showPayModal = false">Batal</button>
+            <button class="btn btn-primary" :disabled="!selectedAccount || processingPayment" @click="processPayment">
+              {{ processingPayment ? 'Memproses...' : 'Bayar Sekarang' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -197,6 +231,12 @@ const editingInvoice = ref(null)
 const invoices = ref([])
 const activeTab = ref('all')
 const filterStatus = ref('')
+
+const showPayModal = ref(false)
+const payingInvoice = ref(null)
+const selectedAccount = ref(null)
+const processingPayment = ref(false)
+const accounts = ref([])
 
 const tabs = [
   { value: 'all', label: 'Semua' },
@@ -295,6 +335,15 @@ const fetchInvoices = async () => {
   }
 }
 
+const fetchAccounts = async () => {
+  try {
+    const response = await api.get('/accounts')
+    accounts.value = response.data
+  } catch (error) {
+    console.error('Failed to fetch accounts', error)
+  }
+}
+
 const viewInvoice = (invoice) => {
   // TODO: Open detail view
   alert(`View invoice: ${invoice.invoice_number}`)
@@ -314,6 +363,34 @@ const editInvoice = (invoice) => {
     notes: invoice.notes || ''
   })
   showCreateModal.value = true
+}
+
+const openPayModal = (invoice) => {
+  payingInvoice.value = invoice
+  selectedAccount.value = null
+  showPayModal.value = true
+  if (accounts.value.length === 0) fetchAccounts()
+}
+
+const processPayment = async () => {
+  if (!payingInvoice.value || !selectedAccount.value) return
+  
+  processingPayment.value = true
+  try {
+    const payload = { account_id: selectedAccount.value }
+    await api.post(`/accounts/invoices/${payingInvoice.value.id}/pay`, payload)
+    
+    // Refresh data
+    showPayModal.value = false
+    await fetchInvoices()
+    // Optionally refresh accounts balance if we track it in UI locally (we don't for now)
+    
+    alert('Pembayaran berhasil!')
+  } catch (error) {
+    alert(error.response?.data?.detail || 'Gagal memproses pembayaran')
+  } finally {
+    processingPayment.value = false
+  }
 }
 
 const saveInvoice = async () => {
@@ -360,6 +437,7 @@ const resetForm = () => {
 
 onMounted(() => {
   fetchInvoices()
+  fetchAccounts()
 })
 </script>
 

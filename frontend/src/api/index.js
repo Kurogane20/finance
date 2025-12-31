@@ -115,7 +115,8 @@ export const invoicesAPI = {
     getById: (id) => api.get(`/accounts/invoices/${id}`),
     create: (data) => api.post('/accounts/invoices', data),
     update: (id, data) => api.put(`/accounts/invoices/${id}`, data),
-    delete: (id) => api.delete(`/accounts/invoices/${id}`)
+    delete: (id) => api.delete(`/accounts/invoices/${id}`),
+    pay: (id, data) => api.post(`/accounts/invoices/${id}/pay`, data)
 }
 
 // Settings API
