@@ -225,6 +225,23 @@ class FinanceService:
                 delta = -delta
             budget.spent_amount += delta
 
+    def _serialize_for_json(self, data: dict) -> dict:
+        """Convert datetime and Decimal objects to JSON-serializable formats"""
+        if data is None:
+            return None
+        
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                result[key] = value.isoformat()
+            elif isinstance(value, date):
+                result[key] = value.isoformat()
+            elif isinstance(value, Decimal):
+                result[key] = float(value)
+            else:
+                result[key] = value
+        return result
+
     def _log_audit(self, action: str, entity: str, entity_id: int, description: str, old_values: dict = None, new_values: dict = None):
         audit = AuditLog(
             user_id=self.user_id,
@@ -232,8 +249,9 @@ class FinanceService:
             entity=entity,
             entity_id=entity_id,
             description=description,
-            old_values=old_values,
-            new_values=new_values,
+            old_values=self._serialize_for_json(old_values),
+            new_values=self._serialize_for_json(new_values),
             timestamp=datetime.utcnow()
         )
         self.db.add(audit)
+
