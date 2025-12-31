@@ -347,9 +347,9 @@ const formatCurrency = (value) => {
 
 const statusClass = (status) => {
   const classes = {
-    completed: 'badge-success',
-    pending: 'badge-warning',
-    cancelled: 'badge-danger'
+    completed: 'badge-completed',
+    pending: 'badge-pending',
+    cancelled: 'badge-cancelled'
   }
   return classes[status] || 'badge-neutral'
 }

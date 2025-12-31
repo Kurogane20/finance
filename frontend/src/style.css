@@ -151,7 +151,7 @@ body {
   @apply bg-amber-50 text-amber-700 border border-amber-100;
 }
 
-/* Tables */
+/* Tables - Enhanced with zebra striping & hover effects */
 .table-container {
   @apply overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white;
 }
@@ -165,19 +165,65 @@ thead {
 }
 
 th {
-  @apply px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider;
+  @apply px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider;
 }
 
 tbody {
-  @apply divide-y divide-slate-50 bg-white;
+  @apply divide-y divide-slate-100/50 bg-white;
 }
 
-tr {
-  @apply transition-colors hover:bg-slate-50/50;
+/* Zebra striping */
+tbody tr:nth-child(even) {
+  @apply bg-slate-50/30;
+}
+
+/* Enhanced row hover */
+tbody tr {
+  @apply transition-all duration-200 cursor-pointer;
+}
+
+tbody tr:hover {
+  @apply bg-primary-50/50 shadow-sm;
 }
 
 td {
   @apply px-6 py-4 whitespace-nowrap text-sm text-slate-600;
+}
+
+/* Status badges in tables */
+.badge-completed,
+.badge-status-completed {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200;
+}
+
+.badge-pending,
+.badge-status-pending {
+  @apply bg-amber-50 text-amber-700 border border-amber-200;
+}
+
+.badge-cancelled,
+.badge-status-cancelled {
+  @apply bg-slate-100 text-slate-500 border border-slate-200;
+}
+
+.badge-overdue,
+.badge-status-overdue {
+  @apply bg-red-50 text-red-700 border border-red-200;
+}
+
+.badge-paid,
+.badge-status-paid {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200;
+}
+
+.badge-draft,
+.badge-status-draft {
+  @apply bg-slate-100 text-slate-500 border border-slate-200;
+}
+
+.badge-sent,
+.badge-status-sent {
+  @apply bg-blue-50 text-blue-700 border border-blue-200;
 }
 
 /* Card Title */
