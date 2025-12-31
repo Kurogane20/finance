@@ -1,23 +1,24 @@
 <template>
-  <div v-if="isAuthenticated" class="app-container">
-    <!-- Sidebar Overlay (mobile only) -->
-    <div 
-      class="sidebar-overlay" 
-      :class="{ active: sidebarOpen }"
-      @click="sidebarOpen = false"
-    ></div>
+  <div v-if="isAuthenticated" class="min-h-screen bg-slate-50 flex font-sans text-slate-900">
     
     <!-- Sidebar -->
     <Sidebar :is-open="sidebarOpen" @close="sidebarOpen = false" />
     
-    <main class="main-content">
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col md:pl-72 transition-all duration-300 min-h-screen">
       <Navbar @toggle-sidebar="sidebarOpen = !sidebarOpen" />
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </main>
+      
+      <main class="flex-1 overflow-x-hidden overflow-y-auto w-full p-6 md:p-8">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+             <div class="max-w-7xl mx-auto">
+                <component :is="Component" />
+             </div>
+          </transition>
+        </router-view>
+      </main>
+    </div>
+
   </div>
   <router-view v-else />
 </template>
@@ -28,7 +29,6 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import Navbar from '@/components/layout/Navbar.vue'
-
 
 const authStore = useAuthStore()
 const route = useRoute()
@@ -50,11 +50,12 @@ onMounted(() => {
 <style>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+  transform: translateY(5px);
 }
 </style>

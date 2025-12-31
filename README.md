@@ -1,154 +1,159 @@
-# Finance Dashboard Application
+# Corporate Finance Dashboard (Finance OS/ERP)
 
-Aplikasi Dashboard Keuangan Perusahaan dengan FastAPI Backend dan Vue.js Frontend.
+A robust, scalable, and secure "System Information Finance" application built with FastAPI (Async) and Vue 3. Features Double-Entry Accounting, Chart of Accounts management, and real-time financial reporting.
 
-![Dashboard Preview](https://img.shields.io/badge/Status-Production_Ready-green)
+![Status](https://img.shields.io/badge/Status-Beta-blue)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 🚀 Fitur Utama
+## 🚀 Key Features
 
-- **Dashboard Overview** - KPI cards, grafik pendapatan vs pengeluaran, kategori breakdown
-- **Transaksi** - CRUD transaksi dengan filter dan kategori
-- **Akun & AR/AP** - Manajemen akun bank/kas, aging analysis piutang/hutang
-- **Anggaran** - Budget vs actual comparison per departemen
-- **Laporan** - Laba Rugi, Arus Kas, Neraca, Export CSV
-- **User Management** - RBAC (Admin, Approver, Editor, Viewer)
-- **Audit Trail** - Log semua aktivitas user
-- **Responsive Design** - Mobile-friendly dengan sidebar toggle
+### Core ERP & Accounting
+- **Chart of Accounts (CoA)**: Hierarchical management of Assets, Liabilities, Equity, Revenue, and Expenses using standard corporate coding (e.g., 101.01).
+- **Double-Entry Journal**: Validated journal entries where Debit must equal Credit.
+- **General Ledger**: Complete ledger view with running balances per account.
+- **Trial Balance**: Automated trial balance generation with debit/credit verification.
+- **Financial Reports**: Balance Sheet, Profit & Loss (Income Statement), General Ledger, Trial Balance.
 
-## 📋 Prasyarat
+### Operational Finance (Legacy/Hybrid)
+- **Dashboard Overview**: KPI cards, revenue vs expense charts.
+- **Transactions**: Simple Cash In/Out recording.
+- **Budgets**: Departmental budget vs actuals.
+- **Invoicing**: Create and track invoices.
 
-- Python 3.9+
-- Node.js 18+
-- npm atau yarn
-- Docker (untuk deployment)
+### Security & Architecture
+- **Async Backend**: High-performance FastAPI with `aiomysql` and SQLAlchemy Async.
+- **Role-Based Access Control**: Admin, Manager (Approver), Staff, Viewer levels.
+- **Modern Frontend**: Vue 3 Composition API, Pinia State Management, Tailwind CSS styling.
+- **Audit Logs**: Full trace of user activities.
 
-## 🛠️ Instalasi Development
+## 📋 Technology Stack
 
-### Backend
+*   **Backend**: Python, FastAPI, SQLAlchemy (Async/Sync), Pydantic, Jose (JWT).
+*   **Database**: MySQL (Production) / SQLite (Dev) with `aiomysql`.
+*   **Frontend**: Vue.js 3, Vite, Pinia, Vue Router, Tailwind CSS, Chart.js.
+*   **Infrastructure**: Docker, Docker Compose, Nginx.
+
+## 🛠️ Installation & Setup
+
+### 1. Backend Setup
 
 ```bash
 cd backend
 
-# Buat virtual environment
+# Create & Activate Virtual Environment
 python -m venv venv
-
-# Aktifkan virtual environment
 # Windows:
 venv\Scripts\activate
 # Linux/Mac:
 source venv/bin/activate
 
-# Install dependencies
+# Install Dependencies (includes aiomysql, fastpi, etc.)
 pip install -r requirements.txt
 
-# Jalankan server
+# Run Database Migrations / Setup Tables
+# The app creates tables on startup automatically.
+# To seed initial Chart of Accounts data:
+# (You may need to run this manually on your DB tool or via script)
+# See backend/coa_seed.sql
+
+# Run Server
 uvicorn main:app --reload
 ```
 
-Backend akan berjalan di `http://localhost:8000`
-- API Docs: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+Backend runs at `http://localhost:8000`.
+Docs: `http://localhost:8000/docs`.
 
-### Frontend
+### 2. Frontend Setup
 
 ```bash
 cd frontend
 
-# Install dependencies
+# Install Dependencies
 npm install
 
-# Jalankan dev server
+# Run Development Server
 npm run dev
 ```
 
-Frontend akan berjalan di `http://localhost:5173`
+Frontend runs at `http://localhost:5173`.
 
-## 🐳 Deploy dengan Docker
+## 🐳 Docker Deployment
+
+To deploy the full stack (Backend, Frontend, Nginx, MySQL):
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/finance.git
+# Clone & Enter
+git clone <repo-url>
 cd finance
 
-# Setup environment
-cp .env.example .env
+# Configure Environment
+cp .env.example .env.production
+# Edit .env.production with real credentials
 
-# Generate secure SECRET_KEY
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-# Copy output ke .env
-
-nano .env  # Edit SECRET_KEY, DOMAIN, dan database passwords
-
-# Build dan jalankan
-docker-compose up -d --build
+# Run with Docker Compose
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
-⚠️ **PENTING**: Jangan deploy ke production tanpa mengikuti [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
+## 🏗️ Project Structure
 
-Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk panduan lengkap deployment ke VPS Ubuntu.
+```
+finance/
+├── backend/
+│   ├── main.py              # App Entry Point & Router Registry
+│   ├── database_async.py    # NEW: Async DB Config
+│   ├── database.py          # Legacy: Sync DB Config
+│   ├── models/              # Modules: accounting.py (ERP), transaction.py (Simple)
+│   ├── schemas/             # Pydantic Validators (Balanced Journals)
+│   ├── routers/             # API Endpoints (journals, accounts, etc.)
+│   └── coa_seed.sql         # SQL Seed for Standard Accounts
+├── frontend/
+│   ├── src/
+│   │   ├── api/             # Axios Setup
+│   │   ├── stores/          # Pinia Stores (accounting.js)
+│   │   ├── views/           # Pages (JournalEntry.vue, Dashboard.vue)
+│   │   └── components/      # Reusable UI
+│   ├── tailwind.config.js   # Tailwind Config
+│   └── style.css            # Global Styles & Tailwind Directives
+└── docker-compose.prod.yml  # Production Orchestration
+```
 
-## 👤 Demo Accounts
+## � Demo Accounts
 
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@company.com | admin123 |
 | CFO/Approver | cfo@company.com | cfo123 |
-| Akuntan/Editor | akuntan@company.com | akuntan123 |
-| Staff/Viewer | staff@company.com | staff123 |
+| Staff | staff@company.com | staff123 |
 
-## 🏗️ Struktur Project
-
-```
-finance/
-├── backend/
-│   ├── main.py              # FastAPI entry point
-│   ├── database.py          # Database config
-│   ├── models/              # SQLAlchemy models
-│   ├── schemas/             # Pydantic schemas
-│   ├── routers/             # API endpoints
-│   ├── utils/               # Utilities
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── api/             # API client
-│   │   ├── components/      # Vue components
-│   │   ├── views/           # Page views
-│   │   ├── stores/          # Pinia stores
-│   │   └── router/          # Vue Router
-│   └── Dockerfile
-├── nginx/                   # Nginx reverse proxy config
-├── docker-compose.yml
-├── DEPLOYMENT.md
-└── README.md
-```
-
-## 🔑 API Endpoints
+## 🔑 Key API Endpoints (New ERP)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | /api/auth/login | Login |
-| GET | /api/dashboard/overview | KPI summary |
-| GET | /api/dashboard/charts | Chart data |
-| GET/POST | /api/transactions | Transactions CRUD |
-| GET | /api/accounts | Accounts list |
-| GET | /api/accounts/aging | AR/AP aging |
-| GET | /api/budgets/comparison | Budget vs Actuals |
-| GET | /api/reports/profit-loss | P&L report |
-| GET | /api/reports/cash-flow | Cash flow report |
-| GET | /api/users | User management |
+| POST | `/api/accounting/journals` | Create valid Double-Entry Journal |
+| GET | `/api/accounting/journals` | List General Journal Entries |
+| GET | `/api/accounting/accounts` | Get Chart of Accounts (CoA) |
+| POST | `/api/accounting/accounts` | Create new Ledger Account |
+| GET | `/api/accounting/ledger/{account_id}` | Get General Ledger for specific account |
+| GET | `/api/accounting/trial-balance` | Generate Trial Balance report |
 
-## 🛡️ Keamanan
+## 📝 Recent Updates (v2.1.0)
 
-- JWT Authentication
-- Role-Based Access Control (RBAC)
-- Audit trail untuk semua perubahan data
-- Password hashing dengan bcrypt
-- Rate limiting pada API
-- HTTPS ready
+**New Features:**
+- ✅ General Ledger report with running balances
+- ✅ Trial Balance report with automatic verification
+- ✅ Enhanced validation for journal entries
+- ✅ Performance optimization with database indices
+- ✅ Environment-based configuration for dev/prod
 
-## 📄 License
+**Bug Fixes:**
+- ✅ Fixed duplicate router import
+- ✅ Fixed hardcoded API URLs
+- ✅ Improved error handling with detailed messages
+
+See [CHANGELOG.md](CHANGELOG.md) for complete details.
+
+## �️ License
 
 MIT License

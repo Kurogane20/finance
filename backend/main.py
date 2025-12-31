@@ -9,7 +9,8 @@ from routers import (
     budgets_router,
     reports_router,
     users_router,
-    analytics_router
+    analytics_router,
+    accounting
 )
 
 # Create database tables
@@ -55,6 +56,15 @@ app.include_router(budgets_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
+app.include_router(accounting.router, prefix="/api")
+
+# Create tables for Async Models (Accounting)
+# We can use the sync engine for this since it's just DDL
+from database import engine as sync_engine
+from database_async import Base as AsyncBase
+# Import models to register them with AsyncBase
+from models import accounting as accounting_models
+AsyncBase.metadata.create_all(bind=sync_engine)
 
 
 @app.get("/")

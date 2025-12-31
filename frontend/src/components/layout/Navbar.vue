@@ -1,205 +1,82 @@
 <template>
-  <header class="navbar">
-    <div class="navbar-left">
-      <button class="mobile-toggle" @click="$emit('toggle-sidebar')">☰</button>
-      <div class="page-info">
-        <h1 class="view-title">{{ pageTitle }}</h1>
-        <p class="view-date">{{ currentDate }}</p>
+  <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 sticky top-0 z-30">
+    <div class="flex items-center gap-4">
+      <button 
+        class="md:hidden text-slate-500 hover:text-slate-700 focus:outline-none"
+        @click="$emit('toggle-sidebar')"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      
+      <div class="hidden md:flex flex-col">
+         <h2 class="text-sm font-bold text-slate-800 leading-tight uppercase tracking-wider">{{ pageTitle }}</h2>
+         <span class="text-xs text-slate-400 font-medium">{{ currentDate }}</span>
       </div>
     </div>
-    
-    <div class="navbar-right">
-      <button class="btn-icon" @click="toggleTheme" title="Ganti Tema">
-        {{ isDark ? '🌞' : '🌙' }}
+
+    <div class="flex items-center gap-4">
+      <button class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+        <span class="sr-only">Notifications</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
       </button>
-      <button class="btn-icon notification-btn" title="Notifikasi">
-        🔔
-        <span class="badge"></span>
-      </button>
-      <div class="separator"></div>
-      <button class="btn logout-btn" @click="handleLogout" title="Keluar">
-        🚪
+      
+      <div class="w-px h-8 bg-slate-200 mx-2"></div>
+      
+      <button 
+        @click="handleLogout" 
+        class="text-sm font-medium text-slate-600 hover:text-red-600 transition-colors flex items-center gap-2"
+      >
+        <span>Logout</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
       </button>
     </div>
   </header>
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
-const isDark = ref(true)
+const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
 
-defineEmits(['toggle-sidebar'])
+defineEmits(['toggle-sidebar']);
 
 const pageTitles = {
-  '/': 'Dashboard Overview',
-  '/transactions': 'Data Transaksi',
-  '/invoices': 'Invoice Management',
-  '/accounts': 'Akun & Buku Besar',
-  '/budgets': 'Perencanaan Anggaran',
+  '/': 'Dashboard',
+  '/transactions': 'Transaksi',
+  '/journals': 'Jurnal Umum',
+  '/invoices': 'Invoice',
+  '/accounts': 'Chart of Accounts',
+  '/budgets': 'Anggaran',
   '/reports': 'Laporan Keuangan',
-  '/users': 'User Management',
-  '/audit-logs': 'System Logs',
-  '/profile': 'My Profile',
-  '/settings': 'System Settings'
-}
+  '/users': 'Manajemen User',
+  '/audit-logs': 'Audit Logs',
+  '/settings': 'Pengaturan',
+  '/profile': 'Profil'
+};
 
-const pageTitle = computed(() => pageTitles[route.path] || 'Dashboard')
+const pageTitle = computed(() => {
+  return pageTitles[route.path] || 'Dashboard';
+});
 
 const currentDate = computed(() => {
-  return new Date().toLocaleDateString('id-ID', { 
-    weekday: 'long', 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
-  })
-})
+  return new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+});
 
-const toggleTheme = () => {
-  isDark.value = !isDark.value
-  if (isDark.value) {
-    document.documentElement.classList.remove('light')
-  } else {
-    document.documentElement.classList.add('light')
-  }
-}
-
-const handleLogout = async () => {
-  if(confirm("Apakah Anda yakin ingin keluar?")) {
-    await authStore.logout()
-    router.push('/login')
-  }
-}
-
-onMounted(() => {
-  isDark.value = !document.documentElement.classList.contains('light')
-})
+const handleLogout = () => {
+  authStore.logout();
+  router.push('/login');
+};
 </script>
 
-<style scoped>
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  padding: 0.5rem 0;
-  animation: slideDown 0.5s ease-out;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.mobile-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.view-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.view-date {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: var(--bg-card);
-  padding: 0.5rem;
-  border-radius: 100px; /* Pill shape */
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-.btn-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.btn-icon:hover {
-  background: var(--bg-hover);
-  transform: rotate(15deg);
-}
-
-.notification-btn {
-  position: relative;
-}
-
-.badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  background: var(--secondary-color);
-  border-radius: 50%;
-}
-
-.separator {
-  width: 1px;
-  height: 24px;
-  background: var(--border-color);
-  margin: 0 0.25rem;
-}
-
-.logout-btn {
-  border: none;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  background: #ef4444;
-  color: white;
-}
-
-@media (max-width: 768px) {
-  .mobile-toggle {
-    display: block;
-  }
-}
-</style>

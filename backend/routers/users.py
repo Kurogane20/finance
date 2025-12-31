@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User, Role
 from models.audit_log import AuditLog
-from schemas.user import UserCreate, UserUpdate, UserResponse, RoleResponse
+from schemas.user import UserCreate, UserUpdate, UserResponse, RoleResponse, ProfileUpdate, PasswordChange
 from utils.security import get_current_user, require_role, get_password_hash
 from typing import List, Optional
 from datetime import datetime
@@ -210,12 +210,11 @@ async def get_my_profile(
 
 @router.put("/profile/me", response_model=UserResponse)
 async def update_my_profile(
-    profile: "ProfileUpdate",
+    profile: ProfileUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Update current user's profile"""
-    from schemas.user import ProfileUpdate
     
     update_data = profile.model_dump(exclude_unset=True)
     
@@ -249,12 +248,11 @@ async def update_my_profile(
 
 @router.post("/profile/change-password")
 async def change_password(
-    password_data: "PasswordChange",
+    password_data: PasswordChange,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Change current user's password"""
-    from schemas.user import PasswordChange
     from utils.security import verify_password
     
     # Verify current password

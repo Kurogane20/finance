@@ -62,6 +62,12 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/journals',
+        name: 'JournalEntry',
+        component: () => import('@/views/JournalEntry.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
         path: '/settings',
         name: 'Settings',
         component: () => import('@/views/SettingsView.vue'),

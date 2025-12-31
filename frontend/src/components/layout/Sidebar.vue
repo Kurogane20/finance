@@ -1,56 +1,78 @@
 <template>
-  <aside class="sidebar" :class="{ open: isOpen }">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <div class="logo-icon">💵</div>
-        <span class="logo-text">Finance<span class="highlight">OS</span></span>
-      </div>
-      <button class="sidebar-close" @click="$emit('close')" aria-label="Close Menu">×</button>
+  <aside class="sidebar w-72 bg-slate-900 border-r border-slate-800 flex flex-col fixed inset-y-0 left-0 z-50 transition-transform duration-300 shadow-2xl" 
+         :class="{ '-translate-x-full': !isOpen, 'translate-x-0': isOpen, 'md:translate-x-0': true }">
+    
+    <!-- Logo -->
+    <div class="h-20 flex items-center px-8 border-b border-slate-800/50 bg-slate-900">
+       <div class="flex items-center gap-3">
+         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-indigo-700 flex items-center justify-center text-white font-bold select-none shadow-lg shadow-primary-900/50">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+           </svg>
+         </div>
+         <span class="text-xl font-bold text-white tracking-tight">Finance<span class="text-primary-400">OS</span></span>
+       </div>
+       <button class="md:hidden ml-auto text-slate-400 hover:text-white transition-colors" @click="$emit('close')">
+         ✕
+       </button>
     </div>
     
-    <nav class="sidebar-nav">
-      <div class="nav-group">
-        <label class="nav-label">Main Menu</label>
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto py-8 px-4 space-y-1 custom-scrollbar">
+      <div class="mb-8">
+        <p class="px-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Main Navigation</p>
         <router-link 
           v-for="item in mainMenuItems" 
           :key="item.path"
           :to="item.path"
-          class="nav-item"
-          :class="{ active: isActive(item.path) }"
+          class="nav-item group"
+          :class="{ 'active': isActive(item.path) }"
           @click="$emit('close')"
         >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span class="nav-text">{{ item.label }}</span>
+          <span class="icon-wrapper group-hover:text-white transition-colors" :class="isActive(item.path) ? 'text-primary-400' : 'text-slate-500'">
+             {{ item.icon }}
+          </span>
+          <span class="font-medium tracking-wide text-sm">{{ item.label }}</span>
           <div class="active-indicator" v-if="isActive(item.path)"></div>
         </router-link>
       </div>
-      
-      <div class="nav-group" v-if="authStore.canApprove">
-        <label class="nav-label">Management</label>
+
+      <div v-if="authStore.canApprove">
+        <p class="px-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Management</p>
         <router-link 
           v-for="item in adminMenuItems" 
           :key="item.path"
           :to="item.path"
-          class="nav-item"
-          :class="{ active: isActive(item.path) }"
+          class="nav-item group"
+          :class="{ 'active': isActive(item.path) }"
           @click="$emit('close')"
         >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span class="nav-text">{{ item.label }}</span>
+           <span class="icon-wrapper group-hover:text-white transition-colors" :class="isActive(item.path) ? 'text-primary-400' : 'text-slate-500'">
+             {{ item.icon }}
+          </span>
+          <span class="font-medium tracking-wide text-sm">{{ item.label }}</span>
+          <div class="active-indicator" v-if="isActive(item.path)"></div>
         </router-link>
       </div>
     </nav>
     
-    <div class="sidebar-footer">
-      <div class="user-card">
-        <div class="user-avatar">{{ authStore.userInitials }}</div>
-        <div class="user-info">
-          <div class="user-name">{{ authStore.userName }}</div>
-          <div class="user-role">{{ roleName }}</div>
+    <!-- User Footer -->
+    <div class="p-6 border-t border-slate-800 bg-slate-900">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 hover:border-slate-600 transition-all cursor-pointer group">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 text-white flex items-center justify-center font-semibold text-sm border border-slate-600 shadow-inner group-hover:scale-105 transition-transform">
+          {{ authStore.userInitials }}
         </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-200 truncate group-hover:text-white">{{ authStore.userName }}</p>
+          <p class="text-xs text-primary-400 truncate font-medium">{{ roleName }}</p>
+        </div>
+        <div class="text-slate-500 group-hover:text-white transition-colors">⚙️</div>
       </div>
     </div>
   </aside>
+
+  <!-- Overlay for Mobile -->
+  <div v-if="isOpen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 md:hidden transition-opacity" @click="$emit('close')"></div>
 </template>
 
 <script setup>
@@ -72,20 +94,21 @@ const authStore = useAuthStore()
 
 const mainMenuItems = [
   { path: '/', icon: '📊', label: 'Dashboard' },
-  { path: '/transactions', icon: '💳', label: 'Transaksi' },
+  { path: '/transactions', icon: '💳', label: 'Transactions' },
+  { path: '/journals', icon: '📓', label: 'General Journal' },
   { path: '/invoices', icon: '📄', label: 'Invoices' },
-  { path: '/accounts', icon: '🏦', label: 'Akun & Ledger' },
-  { path: '/budgets', icon: '🎯', label: 'Anggaran' },
-  { path: '/reports', icon: '📈', label: 'Laporan' }
+  { path: '/accounts', icon: '🏦', label: 'Chart of Accounts' },
+  { path: '/budgets', icon: '🎯', label: 'Budgets' },
+  { path: '/reports', icon: '📈', label: 'Financial Reports' }
 ]
 
 const adminMenuItems = computed(() => {
   const items = [
-    { path: '/audit-logs', icon: '🔒', label: 'Audit Logs' }
+    { path: '/audit-logs', icon: '🛡️', label: 'Audit Logs' }
   ]
   if (authStore.isAdmin) {
-    items.unshift({ path: '/users', icon: '👥', label: 'Pengguna' })
-    items.push({ path: '/settings', icon: '⚡', label: 'Pengaturan' })
+    items.unshift({ path: '/users', icon: '👥', label: 'User Management' })
+    items.push({ path: '/settings', icon: '⚡', label: 'Settings' })
   }
   return items
 })
@@ -93,9 +116,9 @@ const adminMenuItems = computed(() => {
 const roleName = computed(() => {
   const roles = {
     admin: 'Administrator',
-    approver: 'Manager',
+    approver: 'Finance Manager',
     editor: 'Finance Staff',
-    viewer: 'Viewer'
+    viewer: 'Auditor'
   }
   return roles[authStore.userRole] || 'User'
 })
@@ -107,188 +130,34 @@ const isActive = (path) => {
 </script>
 
 <style scoped>
-.sidebar {
-  width: 260px;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: var(--bg-sidebar);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: var(--glass-border);
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 1.5rem;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
-
-.sidebar-header {
-  margin-bottom: 2.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.logo-icon {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.logo-text {
-  letter-spacing: -0.03em;
-}
-
-.highlight {
-  color: var(--primary-color);
-}
-
-.sidebar-close {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.nav-group {
-  margin-bottom: 2rem;
-}
-
-.nav-label {
-  display: block;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  margin-bottom: 1rem;
-  padding-left: 0.75rem;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 20px;
 }
 
 .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.85rem 1rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-  position: relative;
-  overflow: hidden;
+  @apply flex items-center gap-3 px-4 py-3 text-slate-400 rounded-xl transition-all duration-200 relative overflow-hidden;
 }
 
 .nav-item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  transform: translateX(4px);
+  @apply text-slate-200 bg-slate-800/50;
 }
 
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.1), transparent);
-  color: var(--primary-color);
-  font-weight: 600;
-}
-
-.nav-item.active .nav-icon {
-  transform: scale(1.1);
+  @apply bg-primary-600/10 text-white;
 }
 
 .active-indicator {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  background: var(--primary-color);
-  border-radius: 0 4px 4px 0;
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full;
 }
 
-.nav-icon {
-  width: 24px;
-  text-align: center;
-  font-size: 1.1rem;
-  transition: transform 0.2s;
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: rgba(0,0,0,0.1);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-}
-
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  background: var(--primary-dark);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.user-info {
-  flex: 1;
-  overflow: hidden;
-}
-
-.user-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.user-role {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  .sidebar.open {
-    transform: translateX(0);
-  }
-  .sidebar-close {
-    display: block;
-  }
+.icon-wrapper {
+    @apply flex items-center justify-center w-6 text-lg;
 }
 </style>

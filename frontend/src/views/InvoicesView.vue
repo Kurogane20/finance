@@ -217,6 +217,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div v-if="toast.show" class="toast" :class="toast.type">
+      <span>{{ toast.message }}</span>
+      <button @click="toast.show = false">✕</button>
+    </div>
   </div>
 </template>
 
@@ -237,6 +243,21 @@ const payingInvoice = ref(null)
 const selectedAccount = ref(null)
 const processingPayment = ref(false)
 const accounts = ref([])
+
+const toast = reactive({
+  show: false,
+  message: '',
+  type: 'success'
+})
+
+const showToast = (message, type = 'success') => {
+  toast.message = message
+  toast.type = type
+  toast.show = true
+  setTimeout(() => {
+    toast.show = false
+  }, 3000)
+}
 
 const tabs = [
   { value: 'all', label: 'Semua' },
@@ -383,11 +404,11 @@ const processPayment = async () => {
     // Refresh data
     showPayModal.value = false
     await fetchInvoices()
-    // Optionally refresh accounts balance if we track it in UI locally (we don't for now)
+    // Optionally refresh accounts balance
     
-    alert('Pembayaran berhasil!')
+    showToast('Pembayaran berhasil!')
   } catch (error) {
-    alert(error.response?.data?.detail || 'Gagal memproses pembayaran')
+    showToast(error.response?.data?.detail || 'Gagal memproses pembayaran', 'error')
   } finally {
     processingPayment.value = false
   }
@@ -415,7 +436,7 @@ const saveInvoice = async () => {
     resetForm()
     fetchInvoices()
   } catch (error) {
-    alert(error.response?.data?.detail || 'Gagal menyimpan invoice')
+    showToast(error.response?.data?.detail || 'Gagal menyimpan invoice', 'error')
   } finally {
     saving.value = false
   }
@@ -559,6 +580,54 @@ onMounted(() => {
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  color: white;
+  font-weight: 500;
+  z-index: 2000;
+  animation: slideIn 0.3s ease;
+  box-shadow: var(--shadow-lg);
+}
+
+.toast.success {
+  background: var(--color-success);
+}
+
+.toast.error {
+  background: var(--color-danger);
+}
+
+.toast button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.toast button:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 </style>

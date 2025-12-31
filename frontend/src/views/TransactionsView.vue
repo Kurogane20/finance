@@ -169,6 +169,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div v-if="toast.show" class="toast" :class="toast.type">
+      <span>{{ toast.message }}</span>
+      <button @click="toast.show = false">✕</button>
+    </div>
   </div>
 </template>
 
@@ -191,6 +197,21 @@ const importing = ref(false)
 const selectedFile = ref(null)
 const importResult = ref(null)
 const fileInput = ref(null)
+
+const toast = reactive({
+  show: false,
+  message: '',
+  type: 'success'
+})
+
+const showToast = (message, type = 'success') => {
+  toast.message = message
+  toast.type = type
+  toast.show = true
+  setTimeout(() => {
+    toast.show = false
+  }, 3000)
+}
 
 const filters = reactive({
   type: '',
@@ -274,13 +295,14 @@ const createTransaction = async () => {
     await transactionsAPI.create(newTransaction)
     showModal.value = false
     await Promise.all([fetchTransactions(), fetchSummary()])
+    showToast('Transaksi berhasil ditambahkan')
     // Reset form
     newTransaction.amount = null
     newTransaction.category_id = null
     newTransaction.description = ''
     newTransaction.reference = ''
   } catch (error) {
-    alert(error.response?.data?.detail || 'Gagal membuat transaksi')
+    showToast(error.response?.data?.detail || 'Gagal membuat transaksi', 'error')
   } finally {
     saving.value = false
   }
@@ -463,6 +485,54 @@ onMounted(() => {
   }
   .filters {
     flex-wrap: wrap;
+  }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  color: white;
+  font-weight: 500;
+  z-index: 2000;
+  animation: slideIn 0.3s ease;
+  box-shadow: var(--shadow-lg);
+}
+
+.toast.success {
+  background: var(--color-success);
+}
+
+.toast.error {
+  background: var(--color-danger);
+}
+
+.toast button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.toast button:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 </style>
