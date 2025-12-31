@@ -24,7 +24,7 @@ async def get_accounts(
     """Get all accounts"""
     query = db.query(Account).filter(Account.is_active == is_active)
     if type:
-        query = query.filter(Account.account_type == type)
+        query = query.filter(Account.type == type)
     return query.all()
 
 
@@ -39,7 +39,7 @@ async def get_accounts_summary(
     total_balance = sum(float(a.balance) for a in accounts)
     by_type = {}
     for a in accounts:
-        acc_type = a.account_type
+        acc_type = a.type
         if acc_type not in by_type:
             by_type[acc_type] = 0
         by_type[acc_type] += float(a.balance)

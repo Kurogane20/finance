@@ -78,14 +78,14 @@ def seed_users_only():
         accounts = [
             Account(
                 name="Kas Utama",
-                account_type="cash",
+                type="cash",
                 balance=0,
                 currency="IDR",
                 is_active=True
             ),
             Account(
                 name="Bank BCA",
-                account_type="bank",
+                type="bank",
                 account_number="1234567890",
                 balance=0,
                 currency="IDR",
@@ -93,7 +93,7 @@ def seed_users_only():
             ),
             Account(
                 name="Bank Mandiri",
-                account_type="bank",
+                type="bank",
                 account_number="0987654321",
                 balance=0,
                 currency="IDR",
@@ -101,7 +101,7 @@ def seed_users_only():
             ),
             Account(
                 name="Petty Cash",
-                account_type="cash",
+                type="cash",
                 balance=0,
                 currency="IDR",
                 is_active=True
