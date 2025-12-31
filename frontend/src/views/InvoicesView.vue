@@ -492,8 +492,15 @@ onMounted(() => {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   background: var(--bg-card);
+  backdrop-filter: var(--glass-blur); /* Ensure local glass too */
+  border: var(--glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
 }
 
 .stat-icon {

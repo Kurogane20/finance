@@ -259,54 +259,23 @@ async def pay_invoice(
     current_user: User = Depends(require_role(["admin", "editor"])),
     db: Session = Depends(get_db)
 ):
-    """Mark invoice as paid and create transaction"""
-    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice tidak ditemukan")
+    """Mark invoice as paid and create transaction via Service"""
+    from backend.services.finance_service import FinanceService
     
-    if invoice.status == "paid":
-        raise HTTPException(status_code=400, detail="Invoice sudah lunas")
-        
     account_id = payment_data.get("account_id")
     if not account_id:
         raise HTTPException(status_code=400, detail="Account ID required")
         
-    account = db.query(Account).filter(Account.id == account_id).first()
-    if not account:
-        raise HTTPException(status_code=404, detail="Account tidak ditemukan")
-        
-    # Create Transaction
-    # Receivable (Masuk) -> Credit
-    # Payable (Keluar) -> Debit
-    trans_type = "credit" if invoice.type == "receivable" else "debit"
-    description = f"Pembayaran Invoice #{invoice.invoice_number} - {invoice.customer_name}"
-    
-    transaction = Transaction(
-        amount=invoice.total_amount,
-        type=trans_type,
-        account_id=account.id,
-        category_id=None, # Optional or logic to find standard category
-        description=description,
-        reference=invoice.invoice_number,
-        status="completed",
-        created_by=current_user.id,
-        date=datetime.utcnow()
-    )
-    db.add(transaction)
-    
-    # Update Account Balance
-    if trans_type == "credit":
-        account.balance += invoice.total_amount
-    else:
-        account.balance -= invoice.total_amount
-        
-    # Update Invoice Status
-    invoice.status = "paid"
-    invoice.paid_date = date.today()
-    
-    db.commit()
-    
-    return {"message": "Invoice berhasil dibayar", "transaction_id": transaction.id}
+    try:
+        service = FinanceService(db, current_user.id)
+        result = service.pay_invoice(invoice_id, account_id)
+        db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/invoices/{invoice_id}")

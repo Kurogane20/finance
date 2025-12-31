@@ -1,8 +1,5 @@
 <template>
   <div v-if="isAuthenticated" class="app-container">
-    <!-- Mobile Header -->
-    <MobileHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
-    
     <!-- Sidebar Overlay (mobile only) -->
     <div 
       class="sidebar-overlay" 
@@ -14,7 +11,7 @@
     <Sidebar :is-open="sidebarOpen" @close="sidebarOpen = false" />
     
     <main class="main-content">
-      <Navbar />
+      <Navbar @toggle-sidebar="sidebarOpen = !sidebarOpen" />
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -31,7 +28,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import Navbar from '@/components/layout/Navbar.vue'
-import MobileHeader from '@/components/layout/MobileHeader.vue'
+
 
 const authStore = useAuthStore()
 const route = useRoute()

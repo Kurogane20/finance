@@ -1,66 +1,84 @@
 <template>
   <header class="navbar">
     <div class="navbar-left">
-      <h1 class="page-title">{{ pageTitle }}</h1>
-      <p class="page-date">{{ currentDate }}</p>
+      <button class="mobile-toggle" @click="$emit('toggle-sidebar')">☰</button>
+      <div class="page-info">
+        <h1 class="view-title">{{ pageTitle }}</h1>
+        <p class="view-date">{{ currentDate }}</p>
+      </div>
     </div>
     
     <div class="navbar-right">
-      <button class="btn btn-ghost btn-icon" title="Notifikasi">
-        🔔
+      <button class="btn-icon" @click="toggleTheme" title="Ganti Tema">
+        {{ isDark ? '🌞' : '🌙' }}
       </button>
-      <router-link to="/settings" class="btn btn-ghost btn-icon" title="Pengaturan">
-        ⚙️
-      </router-link>
-      <router-link to="/profile" class="btn btn-ghost user-btn" title="Profil">
-        <span class="user-avatar-sm">{{ authStore.userInitials }}</span>
-        <span class="user-name-sm">{{ authStore.userName }}</span>
-      </router-link>
-      <button class="btn btn-secondary" @click="handleLogout">
-        🚪 Keluar
+      <button class="btn-icon notification-btn" title="Notifikasi">
+        🔔
+        <span class="badge"></span>
+      </button>
+      <div class="separator"></div>
+      <button class="btn logout-btn" @click="handleLogout" title="Keluar">
+        🚪
       </button>
     </div>
   </header>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const isDark = ref(true)
+
+defineEmits(['toggle-sidebar'])
 
 const pageTitles = {
-  '/': 'Dashboard',
-  '/transactions': 'Transaksi',
-  '/invoices': 'Invoice',
-  '/accounts': 'Akun & AR/AP',
-  '/budgets': 'Anggaran',
-  '/reports': 'Laporan',
-  '/users': 'Manajemen Pengguna',
-  '/audit-logs': 'Audit Log',
-  '/profile': 'Profil Saya',
-  '/settings': 'Pengaturan'
+  '/': 'Dashboard Overview',
+  '/transactions': 'Data Transaksi',
+  '/invoices': 'Invoice Management',
+  '/accounts': 'Akun & Buku Besar',
+  '/budgets': 'Perencanaan Anggaran',
+  '/reports': 'Laporan Keuangan',
+  '/users': 'User Management',
+  '/audit-logs': 'System Logs',
+  '/profile': 'My Profile',
+  '/settings': 'System Settings'
 }
 
 const pageTitle = computed(() => pageTitles[route.path] || 'Dashboard')
 
 const currentDate = computed(() => {
-  const options = { 
+  return new Date().toLocaleDateString('id-ID', { 
     weekday: 'long', 
-    year: 'numeric', 
+    day: 'numeric', 
     month: 'long', 
-    day: 'numeric' 
-  }
-  return new Date().toLocaleDateString('id-ID', options)
+    year: 'numeric' 
+  })
 })
 
-const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  if (isDark.value) {
+    document.documentElement.classList.remove('light')
+  } else {
+    document.documentElement.classList.add('light')
+  }
 }
+
+const handleLogout = async () => {
+  if(confirm("Apakah Anda yakin ingin keluar?")) {
+    await authStore.logout()
+    router.push('/login')
+  }
+}
+
+onMounted(() => {
+  isDark.value = !document.documentElement.classList.contains('light')
+})
 </script>
 
 <style scoped>
@@ -68,25 +86,42 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md) 0;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 2rem;
+  padding: 0.5rem 0;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .navbar-left {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
+  align-items: center;
+  gap: 1rem;
 }
 
-.page-title {
+.mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
   font-size: 1.5rem;
-  font-weight: 700;
   color: var(--text-primary);
-  margin: 0;
+  cursor: pointer;
 }
 
-.page-date {
-  font-size: 0.875rem;
+.view-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.view-date {
+  font-size: 0.85rem;
   color: var(--text-secondary);
   margin: 0;
 }
@@ -94,44 +129,77 @@ const handleLogout = async () => {
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 0.75rem;
+  background: var(--bg-card);
+  padding: 0.5rem;
+  border-radius: 100px; /* Pill shape */
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
-.user-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: var(--radius-full);
-  text-decoration: none;
-}
-
-.user-btn:hover {
-  background: var(--glass-bg);
-}
-
-.user-avatar-sm {
-  width: 32px;
-  height: 32px;
+.btn-icon {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: var(--gradient-primary);
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 600;
+  transition: all 0.2s;
 }
 
-.user-name-sm {
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  font-weight: 500;
+.btn-icon:hover {
+  background: var(--bg-hover);
+  transform: rotate(15deg);
+}
+
+.notification-btn {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--secondary-color);
+  border-radius: 50%;
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+  margin: 0 0.25rem;
+}
+
+.logout-btn {
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: #ef4444;
+  color: white;
 }
 
 @media (max-width: 768px) {
-  .user-name-sm {
-    display: none;
+  .mobile-toggle {
+    display: block;
   }
 }
 </style>
