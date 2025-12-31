@@ -56,7 +56,7 @@ class FinanceService:
         """
         Update transaction with full ledger reversal and re-application
         """
-        transaction = self.db.query(Transaction).get(transaction_id)
+        transaction = self.db.query(Transaction).filter(Transaction.id == transaction_id).first()
         if not transaction:
             raise ValueError("Transaction not found")
 
@@ -116,7 +116,7 @@ class FinanceService:
         """
         Delete transaction and reverse ledger
         """
-        transaction = self.db.query(Transaction).get(transaction_id)
+        transaction = self.db.query(Transaction).filter(Transaction.id == transaction_id).first()
         if not transaction:
             raise ValueError("Transaction not found")
 
@@ -147,13 +147,13 @@ class FinanceService:
         """
         Process invoice payment
         """
-        invoice = self.db.query(Invoice).get(invoice_id)
+        invoice = self.db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
             raise ValueError("Invoice not found")
         if invoice.status == 'paid':
             raise ValueError("Invoice already paid")
 
-        account = self.db.query(Account).get(account_id)
+        account = self.db.query(Account).filter(Account.id == account_id).first()
         if not account:
             raise ValueError("Account not found")
 
@@ -165,7 +165,7 @@ class FinanceService:
             "date": datetime.utcnow(),
             "amount": invoice.total_amount,
             "type": trans_type,
-            "category_id": None, # Could link to sales/expense category
+            "category_id": None,
             "account_id": account.id,
             "description": description,
             "reference": invoice.invoice_number,
@@ -184,7 +184,7 @@ class FinanceService:
     # --- Internal Helpers ---
 
     def _update_account_balance(self, account_id: int, amount: Decimal, type: str, reverse: bool = False):
-        account = self.db.query(Account).get(account_id)
+        account = self.db.query(Account).filter(Account.id == account_id).first()
         if not account:
             return # Should raise error?
         
