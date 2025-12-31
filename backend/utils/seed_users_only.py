@@ -72,6 +72,45 @@ def seed_users_only():
         db.commit()
         print("✓ Categories created (10 categories)")
         
+        # === ACCOUNTS ===
+        # Required for transaction system to work
+        from models.account import Account
+        accounts = [
+            Account(
+                name="Kas Utama",
+                account_type="cash",
+                balance=0,
+                currency="IDR",
+                is_active=True
+            ),
+            Account(
+                name="Bank BCA",
+                account_type="bank",
+                account_number="1234567890",
+                balance=0,
+                currency="IDR",
+                is_active=True
+            ),
+            Account(
+                name="Bank Mandiri",
+                account_type="bank",
+                account_number="0987654321",
+                balance=0,
+                currency="IDR",
+                is_active=True
+            ),
+            Account(
+                name="Petty Cash",
+                account_type="cash",
+                balance=0,
+                currency="IDR",
+                is_active=True
+            ),
+        ]
+        db.add_all(accounts)
+        db.commit()
+        print("✓ Accounts created (4 accounts)")
+        
         print("\n" + "="*50)
         print("✅ PRODUCTION DATABASE SEEDING COMPLETED!")
         print("="*50)

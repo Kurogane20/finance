@@ -96,4 +96,42 @@ const handleLogout = async () => {
   align-items: center;
   gap: var(--spacing-sm);
 }
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+}
+
+.user-btn:hover {
+  background: var(--glass-bg);
+}
+
+.user-avatar-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.user-name-sm {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .user-name-sm {
+    display: none;
+  }
+}
 </style>

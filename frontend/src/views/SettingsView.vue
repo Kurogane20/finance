@@ -236,16 +236,16 @@ const setTheme = (newTheme) => {
   theme.value = newTheme
   localStorage.setItem('theme', newTheme)
   
-  if (newTheme === 'dark') {
-    document.documentElement.classList.add('dark')
-  } else if (newTheme === 'light') {
-    document.documentElement.classList.remove('dark')
+  if (newTheme === 'light') {
+    document.documentElement.classList.add('light')
+  } else if (newTheme === 'dark') {
+    document.documentElement.classList.remove('light')
   } else {
     // Auto - follow system preference
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark')
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.classList.add('light')
     } else {
-      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.remove('light')
     }
   }
 }
