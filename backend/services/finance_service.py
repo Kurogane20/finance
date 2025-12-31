@@ -9,7 +9,7 @@ from models.account import Account
 from models.budget import Budget
 from models.invoice import Invoice
 from models.audit_log import AuditLog
-from backend.services.finance_service import FinanceService
+
 
 class FinanceService:
     def __init__(self, db: Session, user_id: int):
