@@ -7,7 +7,7 @@ Designed to be ML-ready for future evolution when sufficient data is available.
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 from typing import List, Dict, Any, Optional
 import uuid
@@ -266,19 +266,19 @@ class AnalyticsService:
     def _analyze_invoice_aging(self) -> List[Dict[str, Any]]:
         """Analyze invoice aging for AR/AP"""
         insights = []
-        now = datetime.utcnow()
+        today = date.today()
         
         # Check overdue invoices
         overdue_invoices = self.db.query(Invoice).filter(
             Invoice.status == 'overdue',
-            Invoice.due_date < now
+            Invoice.due_date < today
         ).all()
         
         critical_overdue = []
         warning_overdue = []
         
         for invoice in overdue_invoices:
-            days_overdue = (now - invoice.due_date).days
+            days_overdue = (today - invoice.due_date).days
             if days_overdue >= self.AGING_CRITICAL_DAYS:
                 critical_overdue.append(invoice)
             elif days_overdue >= self.AGING_WARNING_DAYS:
