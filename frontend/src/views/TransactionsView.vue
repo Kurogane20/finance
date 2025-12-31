@@ -53,6 +53,9 @@
           </option>
         </select>
       </div>
+      <button v-if="authStore.canEdit" class="btn btn-secondary mr-2" @click="showImportModal = true">
+        📂 Import CSV
+      </button>
       <button v-if="authStore.canEdit" class="btn btn-primary" @click="showModal = true">
         ➕ Tambah Transaksi
       </button>
@@ -136,6 +139,36 @@
         </form>
       </div>
     </div>
+
+    <!-- Import Modal -->
+    <div v-if="showImportModal" class="modal-overlay" @click.self="showImportModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Import Transaksi (CSV)</h3>
+          <button class="btn btn-ghost btn-icon" @click="showImportModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="text-sm text-secondary mb-4">
+            Upload file CSV dengan kolom: Date, Description, Amount, Type (credit/debit), Account.
+          </p>
+          <div class="form-group">
+            <input type="file" ref="fileInput" accept=".csv" class="form-input" @change="handleFileSelect">
+          </div>
+          <div v-if="importResult" class="mt-4 p-4 rounded bg-neutral">
+            <p v-if="importResult.message" class="text-success font-bold">{{ importResult.message }}</p>
+            <ul v-if="importResult.errors && importResult.errors.length > 0" class="mt-2 text-sm text-danger list-disc pl-4">
+              <li v-for="(err, i) in importResult.errors" :key="i">{{ err }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showImportModal = false">Tutup</button>
+          <button class="btn btn-primary" :disabled="!selectedFile || importing" @click="uploadImport">
+            {{ importing ? 'Mengupload...' : 'Upload' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -152,7 +185,12 @@ const categories = ref([])
 const accounts = ref([])
 const summary = ref({ total_credit: 0, total_debit: 0, net: 0, pending_count: 0 })
 const showModal = ref(false)
+const showImportModal = ref(false)
 const saving = ref(false)
+const importing = ref(false)
+const selectedFile = ref(null)
+const importResult = ref(null)
+const fileInput = ref(null)
 
 const filters = reactive({
   type: '',
@@ -245,6 +283,35 @@ const createTransaction = async () => {
     alert(error.response?.data?.detail || 'Gagal membuat transaksi')
   } finally {
     saving.value = false
+  }
+}
+
+const handleFileSelect = (event) => {
+  selectedFile.value = event.target.files[0]
+  importResult.value = null
+}
+
+const uploadImport = async () => {
+  if (!selectedFile.value) return
+  
+  importing.value = true
+  importResult.value = null
+  
+  const formData = new FormData()
+  formData.append('file', selectedFile.value)
+  
+  try {
+    const response = await transactionsAPI.importCSV(formData)
+    importResult.value = response.data
+    if (response.data.message.includes('Successfully')) {
+      await Promise.all([fetchTransactions(), fetchSummary()])
+      selectedFile.value = null
+      if (fileInput.value) fileInput.value.value = ''
+    }
+  } catch (error) {
+    importResult.value = { errors: [error.response?.data?.detail || 'Gagal upload file'] }
+  } finally {
+    importing.value = false
   }
 }
 

@@ -60,7 +60,10 @@ export const transactionsAPI = {
     getById: (id) => api.get(`/transactions/${id}`),
     create: (data) => api.post('/transactions', data),
     update: (id, data) => api.put(`/transactions/${id}`, data),
-    delete: (id) => api.delete(`/transactions/${id}`)
+    delete: (id) => api.delete(`/transactions/${id}`),
+    importCSV: (formData) => api.post('/transactions/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
 }
 
 // Accounts API
@@ -108,9 +111,11 @@ export const usersAPI = {
 
 // Invoices API
 export const invoicesAPI = {
-    getAll: (params = {}) => api.get('/accounts', { params: { ...params, type: 'invoice' } }),
-    getReceivables: (params = {}) => api.get('/accounts', { params: { ...params } }),
-    getPayables: (params = {}) => api.get('/accounts', { params: { ...params } })
+    getAll: (params = {}) => api.get('/accounts/invoices', { params }),
+    getById: (id) => api.get(`/accounts/invoices/${id}`),
+    create: (data) => api.post('/accounts/invoices', data),
+    update: (id, data) => api.put(`/accounts/invoices/${id}`, data),
+    delete: (id) => api.delete(`/accounts/invoices/${id}`)
 }
 
 // Settings API

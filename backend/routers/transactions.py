@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
 from models.user import User
 from models.transaction import Transaction, Category
+from models.account import Account
 from models.audit_log import AuditLog
 from schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse, CategoryResponse
 from utils.security import get_current_user, require_role
 from typing import List, Optional
 from datetime import datetime
+import csv
+import io
+from decimal import Decimal
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -203,3 +207,86 @@ async def delete_transaction(
     db.commit()
     
     return {"message": "Transaksi berhasil dihapus"}
+
+@router.post("/import", response_model=dict)
+async def import_transactions(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role(["admin", "editor"])),
+    db: Session = Depends(get_db)
+):
+    """Import transactions from CSV"""
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+    
+    content = await file.read()
+    decoded = content.decode('utf-8')
+    csv_reader = csv.DictReader(io.StringIO(decoded))
+    
+    success_count = 0
+    errors = []
+    
+    # Cache accounts and categories to reduce DB queries
+    accounts = {a.name.lower(): a.id for a in db.query(Account).all()}
+    categories = {c.name.lower(): c.id for c in db.query(Category).all()}
+    
+    for row_num, row in enumerate(csv_reader, start=1):
+        try:
+            # Validate required fields
+            required = ['Date', 'Description', 'Amount', 'Type', 'Account']
+            if not all(k in row for k in required):
+                raise ValueError(f"Missing required columns: {required}")
+            
+            # Parse Date
+            try:
+                date_val = datetime.strptime(row['Date'], '%Y-%m-%d')
+            except ValueError:
+                date_val = datetime.strptime(row['Date'], '%d/%m/%Y')
+                
+            # Resolve Account
+            acc_name = row['Account'].lower()
+            account_id = accounts.get(acc_name)
+            if not account_id:
+                # Try partial match or default
+                account_id = next((id for name, id in accounts.items() if acc_name in name), None)
+                if not account_id:
+                    raise ValueError(f"Account '{row['Account']}' not found")
+            
+            # Resolve Category
+            cat_name = row.get('Category', 'Lainnya').lower()
+            category_id = categories.get(cat_name)
+            if not category_id:
+                # Create new category if not exists
+                new_cat = Category(
+                    name=row.get('Category', 'Lainnya'),
+                    type='expense' if row['Type'] == 'debit' else 'income',
+                    icon='📂',
+                    color='#94a3b8'
+                )
+                db.add(new_cat)
+                db.flush()
+                categories[new_cat.name.lower()] = new_cat.id
+                category_id = new_cat.id
+            
+            # Create Transaction
+            transaction = Transaction(
+                date=date_val,
+                description=row['Description'],
+                amount=Decimal(row['Amount']),
+                type=row['Type'].lower(),
+                category_id=category_id,
+                account_id=account_id,
+                status='completed',
+                created_by=current_user.id
+            )
+            db.add(transaction)
+            success_count += 1
+            
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+            
+    db.commit()
+    
+    return {
+        "message": f"Successfully imported {success_count} transactions",
+        "errors": errors
+    }
